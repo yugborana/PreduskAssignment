@@ -13,6 +13,7 @@ ENV PYTHONPATH=/app
 # Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for caching
@@ -29,9 +30,10 @@ COPY eval/ ./eval/
 # Expose port (Railway will use PORT env variable)
 EXPOSE 8000
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
-  CMD sh -c "python - << 'EOF'\nimport os, urllib.request\nport=os.environ.get('PORT','8000')\nurllib.request.urlopen(f'http://localhost:{port}/health')\nEOF" || exit 1
+# Health check using curl (simpler and more reliable)
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD curl -f http://localhost:${PORT:-8000}/health || exit 1
+
 # Run the application
 # Railway provides PORT env variable, defaulting to 8000
 CMD ["sh", "-c", "uvicorn backend.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
