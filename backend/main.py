@@ -118,6 +118,10 @@ class Conversation(BaseModel):
 
 
 # API Routes
+@app.get("/")
+async def root():
+    return {"message": "RAG System API is running. Visit /docs for documentation."}
+
 @app.get("/health", response_model=HealthResponse)
 async def health_check():
     """Health check endpoint with index stats."""
