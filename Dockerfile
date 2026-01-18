@@ -1,22 +1,24 @@
 FROM python:3.11-slim-bookworm
 
-# Install system dependencies
+# 1. Install system dependencies
 RUN apt-get update && apt-get install -y \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Copy dependency file
+# 2. Copy and install dependencies first (for caching)
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy your actual code
+# 3. Copy the folders
+# Note: Ensure these folders have __init__.py files
 COPY backend/ ./backend/
 COPY eval/ ./eval/
 
-# Set Python path
+# 4. Set PYTHONPATH to the current working directory
 ENV PYTHONPATH=/app
 
-# Run the FastAPI server
-CMD ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8080"]
+# 5. Use the list format for CMD and dynamic PORT
+# Railway automatically assigns a PORT environment variable
+CMD ["sh", "-c", "uvicorn backend.main:app --host 0.0.0.0 --port ${PORT:-8080}"]
